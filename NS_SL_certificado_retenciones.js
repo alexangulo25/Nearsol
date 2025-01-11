@@ -29,7 +29,7 @@ define(['N/ui/serverWidget', 'N/search', 'N/file', 'N/render', 'N/record'],
                 });
 
                 // Add Client Script for handling Print button and filtering
-                form.clientScriptFileId = 'YOUR_CLIENT_SCRIPT_FILE_ID'; // Replace with actual file ID
+                form.clientScriptModulePath = './NS_CS_Csrtificado_retenciones.js'; // Replace with actual file ID
 
                 // Fetch and display search results if vendor is selected
                 const vendorId = context.request.parameters.custpage_vendor_filter || '';
