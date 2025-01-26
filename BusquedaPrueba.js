@@ -64,7 +64,8 @@ define(['N/ui/serverWidget', 'N/search', 'N/record', 'N/render', 'N/config'], fu
 
             filters.push(["subsidiary", "anyof", "10"])
             if (vendor) {
-                filters.push(['entity', 'anyof', vendor]);
+                filters.push('AND');
+                filters.push(["vendor.internalid", "anyof", vendor]);
             }
             if (startDate) {
                 if (filters.length > 0) {
