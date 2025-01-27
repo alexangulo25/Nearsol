@@ -2,13 +2,13 @@
  * @NApiVersion 2.x
  * @NScriptType ClientScript
  */
-define(['N/url', 'N/currentRecord', 'N/https'], function(url, currentRecord, https) {
+define(['N/url', 'N/currentRecord', 'N/https'], function (url, currentRecord, https) {
     function pageInit(context) {
         var record = currentRecord.get();
         var retainerInfo = record.getValue({ fieldId: 'custpage_retainer_info' });
         console.log('Retainer Info:', retainerInfo);
     }
-
+// funcion para formatear la fecha
     function formatDate(date) {
         var d = new Date(date);
         var month = '' + (d.getMonth() + 1);
@@ -20,7 +20,7 @@ define(['N/url', 'N/currentRecord', 'N/https'], function(url, currentRecord, htt
 
         return [month, day, year].join('/');
     }
-
+// esta funcion es la generadora de PDF individuales
     function generatePDF() {
         var record = currentRecord.get();
         var vendorId = record.getValue({ fieldId: 'custpage_hidden_vendor' });
@@ -76,67 +76,71 @@ define(['N/url', 'N/currentRecord', 'N/https'], function(url, currentRecord, htt
         });
         window.open(suiteletUrl, '_blank');
     }
-
+// Esta función es la generadora de PDF masivos
     function generateMultiplePDFs() {
-    var record = currentRecord.get();
-    var startDate = record.getValue({ fieldId: 'custpage_hidden_startdate' });
-    var endDate = record.getValue({ fieldId: 'custpage_hidden_enddate' });
+        var record = currentRecord.get();
+        var startDate = record.getValue({ fieldId: 'custpage_hidden_startdate' });
+        var endDate = record.getValue({ fieldId: 'custpage_hidden_enddate' });
 
-    if (!startDate) {
-        startDate = '01/01/1970';
-    } else {
-        startDate = formatDate(startDate);
-    }
-
-    if (!endDate) {
-        endDate = formatDate(new Date());
-    } else {
-        endDate = formatDate(endDate);
-    }
-
-    var fiscalYear = new Date(startDate).getFullYear();
-
-    var vendorData = JSON.parse(record.getValue({ fieldId: 'custpage_vendor_data' }));
-
-    console.log('Vendor Data:', vendorData);
-
-    var vendorIds = Object.keys(vendorData);
-    var index = 0;
-
-    function sendRequest() {
-        if (index < vendorIds.length) {
-            var vendorId = vendorIds[index];
-            console.log('Vendor ID:', vendorId);
-
-            var vendorInfo = vendorData[vendorId];
-            if (vendorInfo && vendorInfo.vendorName) {
-                var vendorName = vendorInfo.vendorName;
-
-                var suiteletUrl = url.resolveScript({
-                    scriptId: 'customscript_generate_mass_pdf_suitelet_',
-                    deploymentId: 'customdeploy_generate_mass_pdf_suitelet_',
-                    params: {
-                        vendorId: vendorId,
-                        vendorName: vendorName,
-                        startDate: startDate,
-                        endDate: endDate,
-                        fiscalYear: fiscalYear,
-                        sublistData: JSON.stringify(vendorInfo.lines),
-                        retainerInfo: record.getValue({ fieldId: 'custpage_retainer_info' })
-                    }
-                });
-                window.open(suiteletUrl, '_blank');
-            } else {
-                console.error('Vendor info is missing for vendor ID:', vendorId);
-            }
-
-            index++;
-            setTimeout(sendRequest, 3000); // Espera 3 segundos antes de enviar la siguiente solicitud
+        if (!startDate) {
+            startDate = '01/01/1970';
+        } else {
+            startDate = formatDate(startDate);
         }
-    }
 
-    sendRequest();
-}
+        if (!endDate) {
+            endDate = formatDate(new Date());
+        } else {
+            endDate = formatDate(endDate);
+        }
+
+        var fiscalYear = new Date(startDate).getFullYear();
+
+        var vendorData = JSON.parse(record.getValue({ fieldId: 'custpage_vendor_data' }));
+
+        console.log('Vendor Data:', vendorData);
+
+        var vendorIds = Object.keys(vendorData);
+        var index = 0;
+
+        function sendRequest() {
+            if (index < vendorIds.length) {
+                var vendorId = vendorIds[index];
+                console.log('Vendor ID:', vendorId);
+
+                var vendorInfo = vendorData[vendorId];
+                if (vendorInfo && vendorInfo.vendorName) {
+                    var vendorName = vendorInfo.vendorName;
+
+                    var suiteletUrl = url.resolveScript({
+                        scriptId: 'customscript_generate_mass_pdf_suitelet_',
+                        deploymentId: 'customdeploy_generate_mass_pdf_suitelet_',
+                        params: {
+                            vendorId: vendorId,
+                            vendorName: vendorName,
+                            startDate: startDate,
+                            endDate: endDate,
+                            fiscalYear: fiscalYear,
+                            sublistData: JSON.stringify(vendorInfo.lines)
+                        }
+                    });
+                    console.log('Suitelet URL:', suiteletUrl);
+
+                    // abre la URL en una nueva pestaña
+                    window.open(suiteletUrl, '_blank');
+
+                    index++;
+                    setTimeout(sendRequest, 2000); // Espera 2 segundos antes de enviar la siguiente solicitud
+                } else {
+                    console.error('Vendor info is missing for vendor ID:', vendorId);
+                    index++;
+                    setTimeout(sendRequest, 2000); // Espera 2 segundos antes de enviar la siguiente solicitud
+                }
+            }
+        }
+
+        sendRequest();
+    }
     return {
         pageInit: pageInit,
         generatePDF: generatePDF,
