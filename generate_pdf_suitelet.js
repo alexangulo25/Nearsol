@@ -85,10 +85,9 @@ define(['N/config', 'N/render', 'N/record', 'N/log'], function(config, render, r
             var key = row.type + '|' + row.name + '|' + row.account;
             if (!groupedData[key]) {
                 groupedData[key] = {
-                    type: row.type,
                     name: row.name,
                     account: row.account,
-                    amount: 0
+                    amount:0
                 };
             }
             groupedData[key].amount += parseFloat(row.amount);
@@ -101,7 +100,6 @@ define(['N/config', 'N/render', 'N/record', 'N/log'], function(config, render, r
         for (var key in groupedData) {
             var row = groupedData[key];
             tableRows += '<tr>';
-            tableRows += '<td>' + escapeXml(row.type) + '</td>';
             tableRows += '<td>' + escapeXml(row.name) + '</td>';
             tableRows += '<td>' + escapeXml(row.account) + '</td>';
             tableRows += '<td>' + escapeXml(row.amount.toFixed(2)) + '</td>';
