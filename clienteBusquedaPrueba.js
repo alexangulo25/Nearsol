@@ -106,7 +106,7 @@ define(['N/url', 'N/currentRecord', 'N/https'], function (url, currentRecord, ht
             scriptId: 'customscript_generate_pdf_suitelet_',
             deploymentId: 'customdeploy_generate_pdf_suitelet_',
             params: {
-                vendorIds: vendorIds,
+                vendorIds: JSON.stringify(vendorIds),
                 startDate: startDate,
                 endDate: endDate,
                 fiscalYear: fiscalYear

@@ -109,7 +109,7 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file'], function (config
 
                 context.response.write(message);
             } else {
-                var vendorsObj = JSON.parse(multipleVendors)
+                //var vendorsObj = JSON.parse(multipleVendors)
                 context.response.write('Trabajando por optimizar esta sección');
             }
         } catch (e) {
@@ -192,7 +192,7 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file'], function (config
 
         xml += '<table class="header-table red-rounded-table">';
         xml += '<tr>';
-        xml += '<td><img src="URL_DEL_LOGO" /></td>';
+        xml += '<td><img src="' + escapeXml("http://6421207-sb1.shop.netsuite.com/core/media/media.nl?id=2209&c=6421207_SB1&h=nAm5x9wxUKPXLKvwtLTvPJuOl2UkT7Vb8r0-SyQEiV-v7QSO") + '" /></td>';
         xml += '<td>';
         xml += '<h1><strong>CERTIFICADO DE RETENCION EN LA FUENTE</strong></h1>';
         xml += '<p><strong>Año Gravable: </strong> ' + escapeXml(fiscalYear) + '</p>';
