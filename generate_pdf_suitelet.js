@@ -2,49 +2,116 @@
  * @NApiVersion 2.x
  * @NScriptType Suitelet
  */
-define(['N/config', 'N/render', 'N/record', 'N/log'], function(config, render, record, log) {
+define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file'], function (config, render, record, log, file) {
     function onRequest(context) {
         try {
-            var vendorId = context.request.parameters.vendorId;
-            var startDate = context.request.parameters.startDate;
-            var endDate = context.request.parameters.endDate;
-            var fiscalYear = context.request.parameters.fiscalYear;
-            var sublistData = JSON.parse(context.request.parameters.sublistData);
+            var multipleVendors = context.request.parameters.vendorIds
+            if (!multipleVendors) {
+                //1 vendor 
 
-            log.debug('Parameters', { vendorId: vendorId, startDate: startDate, endDate: endDate, fiscalYear: fiscalYear, sublistData: sublistData });
+                var vendorId = context.request.parameters.vendorId;
+                var startDate = context.request.parameters.startDate;
+                var endDate = context.request.parameters.endDate;
+                var fiscalYear = context.request.parameters.fiscalYear;
+                var sublistData = JSON.parse(context.request.parameters.sublistData);
 
-            if (!vendorId) {
-                throw new Error('Vendor ID is required');
-            }
+                log.debug('Parameters', { vendorId: vendorId, startDate: startDate, endDate: endDate, fiscalYear: fiscalYear, sublistData: sublistData });
 
-            // Log the vendorId to debug
-            log.debug('Vendor ID Received', vendorId);
+                if (!vendorId) {
+                    throw new Error('Vendor ID is required');
+                }
 
-            // Log the sublistData to debug
-            log.debug('Sublist Data', sublistData);
+                // Log the vendorId to debug
+                log.debug('Vendor ID Received', vendorId);
 
-            var vendorRecord;
-            try {
-                vendorRecord = record.load({
-                    type: record.Type.VENDOR,
-                    id: vendorId
+                // Log the sublistData to debug
+                log.debug('Sublist Data', sublistData);
+
+                var vendorRecord;
+                try {
+                    vendorRecord = record.load({
+                        type: record.Type.VENDOR,
+                        id: vendorId
+                    });
+                    log.debug('Vendor Record Loaded', vendorRecord);
+                } catch (e) {
+                    log.error('Failed to load vendor record', { vendorId: vendorId, error: e.message });
+                    throw new Error('Failed to load vendor record: ' + e.message);
+                }
+
+                var xml = generateXML(vendorRecord, startDate, endDate, fiscalYear, sublistData); // Generar el XML con los detalles del proveedor
+                if (!xml) {
+                    throw new Error('Failed to generate XML');
+                }
+
+                log.debug('Generated XML', xml);
+                var vendorName = vendorRecord.getValue('entityid');
+                var fileName = vendorName + '_Fiscal_Year_' + fiscalYear + '.pdf';
+
+                var pdfFile = render.xmlToPdf({ xmlString: xml });
+                var fileObj = file.create({
+                    name: fileName,  // Replace with your preferred file name
+                    fileType: file.Type.PDF,
+                    contents: pdfFile.getContents(),
+                    folder: 5968,
+                    description: 'Generated PDF for ' + vendorName + ' in FY ' + fiscalYear
                 });
-                log.debug('Vendor Record Loaded', vendorRecord);
-            } catch (e) {
-                log.error('Failed to load vendor record', { vendorId: vendorId, error: e.message });
-                throw new Error('Failed to load vendor record: ' + e.message);
+
+                var fileId = fileObj.save();
+
+                var fileUrl = file.load({ id: fileId }).url;
+
+                var message =
+                    '<!DOCTYPE html>' +
+                    '<html lang="en">' +
+                    '<head>' +
+                    '    <meta charset="UTF-8">' +
+                    '    <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+                    '    <title>PDF Saved</title>' +
+                    '    <style>' +
+                    '        body {' +
+                    '            font-family: Arial, sans-serif;' +
+                    '            margin: 20px;' +
+                    '            color: #333;' +
+                    '        }' +
+                    '        h1 {' +
+                    '            color: #4CAF50;' +
+                    '        }' +
+                    '        p {' +
+                    '            font-size: 16px;' +
+                    '        }' +
+                    '        a {' +
+                    '            color: #0066cc;' +
+                    '            text-decoration: none;' +
+                    '        }' +
+                    '        a:hover {' +
+                    '            text-decoration: underline;' +
+                    '        }' +
+                    '        .container {' +
+                    '            border: 1px solid #ddd;' +
+                    '            padding: 20px;' +
+                    '            border-radius: 8px;' +
+                    '            background-color: #f9f9f9;' +
+                    '            max-width: 600px;' +
+                    '            margin: 0 auto;' +
+                    '        }' +
+                    '    </style>' +
+                    '</head>' +
+                    '<body>' +
+                    '    <div class="container">' +
+                    '        <h1>PDF Successfully Saved</h1>' +
+                    '        <p>Your PDF has been successfully saved in the File Cabinet. You can access it by clicking the link below:</p>' +
+                    '        <p><a href="' + fileUrl + '" target="_blank">Download Your PDF</a></p>' +
+                    '    </div>' +
+                    '</body>' +
+                    '</html>';
+
+
+                context.response.write(message);
+            } else {
+                var vendorsObj = JSON.parse(multipleVendors)
+                context.response.write('Trabajando por optimizar esta sección');
             }
-
-            var xml = generateXML(vendorRecord, startDate, endDate, fiscalYear, sublistData); // Generar el XML con los detalles del proveedor
-            if (!xml) {
-                throw new Error('Failed to generate XML');
-            }
-
-            log.debug('Generated XML', xml);
-
-            var pdfFile = render.xmlToPdf({ xmlString: xml });
-
-            context.response.writeFile(pdfFile);
         } catch (e) {
             log.error({
                 title: 'Error generating PDF',
@@ -81,13 +148,13 @@ define(['N/config', 'N/render', 'N/record', 'N/log'], function(config, render, r
         var groupedData = {};
 
         // Agrupar los datos de la sublista
-        sublistData.forEach(function(row) {
+        sublistData.forEach(function (row) {
             var key = row.type + '|' + row.name + '|' + row.account;
             if (!groupedData[key]) {
                 groupedData[key] = {
                     name: row.name,
                     account: row.account,
-                    amount:0
+                    amount: 0
                 };
             }
             groupedData[key].amount += parseFloat(row.amount);
@@ -159,7 +226,7 @@ define(['N/config', 'N/render', 'N/record', 'N/log'], function(config, render, r
         xml += '</tr>';
         xml += tableRows;
         xml += '</table>';
-        
+
         xml += '<p><strong>Firma autorizada:</strong> ______________________</p>';
         xml += '<h2>Documentos y fechas de pago</h2>';
         xml += '<div class="footer">';

@@ -8,7 +8,7 @@ define(['N/url', 'N/currentRecord', 'N/https'], function (url, currentRecord, ht
         var retainerInfo = record.getValue({ fieldId: 'custpage_retainer_info' });
         console.log('Retainer Info:', retainerInfo);
     }
-// funcion para formatear la fecha
+
     function formatDate(date) {
         var d = new Date(date);
         var month = '' + (d.getMonth() + 1);
@@ -20,7 +20,7 @@ define(['N/url', 'N/currentRecord', 'N/https'], function (url, currentRecord, ht
 
         return [month, day, year].join('/');
     }
-// esta funcion es la generadora de PDF individuales
+
     function generatePDF() {
         var record = currentRecord.get();
         var vendorId = record.getValue({ fieldId: 'custpage_hidden_vendor' });
@@ -48,7 +48,7 @@ define(['N/url', 'N/currentRecord', 'N/https'], function (url, currentRecord, ht
             return;
         }
 
-        console.log('Vendor ID:', vendorId);
+
 
         var sublistData = [];
         var lineCount = record.getLineCount({ sublistId: 'custpage_sublist' });
@@ -76,7 +76,7 @@ define(['N/url', 'N/currentRecord', 'N/https'], function (url, currentRecord, ht
         });
         window.open(suiteletUrl, '_blank');
     }
-// Esta función es la generadora de PDF masivos
+
     function generateMultiplePDFs() {
         var record = currentRecord.get();
         var startDate = record.getValue({ fieldId: 'custpage_hidden_startdate' });
@@ -98,48 +98,26 @@ define(['N/url', 'N/currentRecord', 'N/https'], function (url, currentRecord, ht
 
         var vendorData = JSON.parse(record.getValue({ fieldId: 'custpage_vendor_data' }));
 
-        console.log('Vendor Data:', vendorData);
-
         var vendorIds = Object.keys(vendorData);
-        var index = 0;
+        console.log('Vendor ID:', vendorIds);
 
-        function sendRequest() {
-            if (index < vendorIds.length) {
-                var vendorId = vendorIds[index];
-                console.log('Vendor ID:', vendorId);
 
-                var vendorInfo = vendorData[vendorId];
-                if (vendorInfo && vendorInfo.vendorName) {
-                    var vendorName = vendorInfo.vendorName;
-
-                    var suiteletUrl = url.resolveScript({
-                        scriptId: 'customscript_generate_mass_pdf_suitelet_',
-                        deploymentId: 'customdeploy_generate_mass_pdf_suitelet_',
-                        params: {
-                            vendorId: vendorId,
-                            vendorName: vendorName,
-                            startDate: startDate,
-                            endDate: endDate,
-                            fiscalYear: fiscalYear,
-                            sublistData: JSON.stringify(vendorInfo.lines)
-                        }
-                    });
-                    console.log('Suitelet URL:', suiteletUrl);
-
-                    // abre la URL en una nueva pestaña
-                    window.open(suiteletUrl, '_blank');
-
-                    index++;
-                    setTimeout(sendRequest, 2000); // Espera 2 segundos antes de enviar la siguiente solicitud
-                } else {
-                    console.error('Vendor info is missing for vendor ID:', vendorId);
-                    index++;
-                    setTimeout(sendRequest, 2000); // Espera 2 segundos antes de enviar la siguiente solicitud
-                }
+        var suiteletUrl = url.resolveScript({
+            scriptId: 'customscript_generate_pdf_suitelet_',
+            deploymentId: 'customdeploy_generate_pdf_suitelet_',
+            params: {
+                vendorIds: vendorIds,
+                startDate: startDate,
+                endDate: endDate,
+                fiscalYear: fiscalYear
             }
-        }
+        });
 
-        sendRequest();
+
+        // abre la URL en una nueva pestaña
+        window.open(suiteletUrl, '_blank');
+
+
     }
     return {
         pageInit: pageInit,
