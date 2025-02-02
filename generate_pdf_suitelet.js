@@ -2,16 +2,16 @@
  * @NApiVersion 2.x
  * @NScriptType Suitelet
  */
-define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file'], function (config, render, record, log, file) {
+define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], function (config, render, record, log, file, task) {
     function onRequest(context) {
         try {
-            var multipleVendors = context.request.parameters.vendorIds
+            var multipleVendors = context.request.parameters.massPDF
+            var startDate = context.request.parameters.startDate;
+            var endDate = context.request.parameters.endDate;
             if (!multipleVendors) {
                 //1 vendor 
 
                 var vendorId = context.request.parameters.vendorId;
-                var startDate = context.request.parameters.startDate;
-                var endDate = context.request.parameters.endDate;
                 var fiscalYear = context.request.parameters.fiscalYear;
                 var sublistData = JSON.parse(context.request.parameters.sublistData);
 
@@ -43,8 +43,6 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file'], function (config
                 if (!xml) {
                     throw new Error('Failed to generate XML');
                 }
-
-                log.debug('Generated XML', xml);
                 var vendorName = vendorRecord.getValue('entityid');
                 var fileName = vendorName + '_Fiscal_Year_' + fiscalYear + '.pdf';
 
@@ -109,8 +107,72 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file'], function (config
 
                 context.response.write(message);
             } else {
-                //var vendorsObj = JSON.parse(multipleVendors)
-                context.response.write('Trabajando por optimizar esta sección');
+
+                log.debug({
+                    title: 'parameters',
+                    details: context.request.parameters
+                })
+
+                var mrTask = task.create({
+                    taskType: task.TaskType.MAP_REDUCE,
+                    scriptId: 'customscript_ns_mr_generate_massive_pdf',
+                    deploymentId: 'customdeploy_ns_mr_generate_massive_pdf',
+                    params: {
+                        custscript_start_date: startDate,
+                        custscript_end_date: endDate
+                    }
+                });
+
+                var taskId = mrTask.submit();
+                log.debug('Map/Reduce Task Submitted: ' + taskId);
+
+                var message =
+                    '<!DOCTYPE html>' +
+                    '<html lang="en">' +
+                    '<head>' +
+                    '    <meta charset="UTF-8">' +
+                    '    <meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+                    '    <title>PDF Saved</title>' +
+                    '    <style>' +
+                    '        body {' +
+                    '            font-family: Arial, sans-serif;' +
+                    '            margin: 20px;' +
+                    '            color: #333;' +
+                    '        }' +
+                    '        h1 {' +
+                    '            color: #4CAF50;' +
+                    '        }' +
+                    '        p {' +
+                    '            font-size: 16px;' +
+                    '        }' +
+                    '        a {' +
+                    '            color: #0066cc;' +
+                    '            text-decoration: none;' +
+                    '        }' +
+                    '        a:hover {' +
+                    '            text-decoration: underline;' +
+                    '        }' +
+                    '        .container {' +
+                    '            border: 1px solid #ddd;' +
+                    '            padding: 20px;' +
+                    '            border-radius: 8px;' +
+                    '            background-color: #f9f9f9;' +
+                    '            max-width: 600px;' +
+                    '            margin: 0 auto;' +
+                    '        }' +
+                    '    </style>' +
+                    '</head>' +
+                    '<body>' +
+                    '    <div class="container">' +
+                    '        <h1>PDFs Successfully Saved</h1>' +
+                    '        <p>Your PDFs has been successfully saved in the File Cabinet.</p>' +
+
+                    '    </div>' +
+                    '</body>' +
+                    '</html>';
+
+
+                context.response.write(message);
             }
         } catch (e) {
             log.error({

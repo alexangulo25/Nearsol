@@ -94,22 +94,14 @@ define(['N/url', 'N/currentRecord', 'N/https'], function (url, currentRecord, ht
             endDate = formatDate(endDate);
         }
 
-        var fiscalYear = new Date(startDate).getFullYear();
-
-        var vendorData = JSON.parse(record.getValue({ fieldId: 'custpage_vendor_data' }));
-
-        var vendorIds = Object.keys(vendorData);
-        console.log('Vendor ID:', vendorIds);
-
 
         var suiteletUrl = url.resolveScript({
             scriptId: 'customscript_generate_pdf_suitelet_',
             deploymentId: 'customdeploy_generate_pdf_suitelet_',
             params: {
-                vendorIds: JSON.stringify(vendorIds),
                 startDate: startDate,
                 endDate: endDate,
-                fiscalYear: fiscalYear
+                massPDF: true
             }
         });
 
