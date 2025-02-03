@@ -229,7 +229,6 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
         for (var key in groupedData) {
             var row = groupedData[key];
             tableRows += '<tr>';
-            tableRows += '<td>' + escapeXml(row.name) + '</td>';
             tableRows += '<td>' + escapeXml(row.account) + '</td>';
             tableRows += '<td>' + escapeXml(row.amount.toFixed(2)) + '</td>';
             tableRows += '</tr>';
@@ -239,17 +238,18 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
         log.debug('Total Retention Amount', totalRetentionAmount);
 
         var xml = '<pdf><head><style>';
-        xml += 'body { font-family: Arial, sans-serif; font-size: 12pt; color: #333; }';
+        xml += 'body { font-family: Arial, sans-serif; font-size: 10pt; color: #333; }';
         xml += 'h1 { font-size: 18pt; color: #000000; }';
         xml += 'h2 { font-size: 14pt; color: #0056b3; }';
         xml += 'table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }';
         xml += '.red-rounded-table { border: 2px solid red; border-radius: 10px; padding: 10px; }';
         xml += '.black-rounded-table { border: 2px solid black; border-radius: 10px; padding: 10px; }';
-        xml += 'th, td { padding: 8px; text-align: left; }';
+        xml += 'th, td { padding: 6px; text-align: center; }'; // Sin bordes por defecto
         xml += 'th { background-color: #f2f2f2; }';
         xml += '.header-table td { border: none; }';
         xml += '.header-table img { width: 100px; }';
-        xml += '.footer { text-align: center; font-size: 10pt; margin-top: 20px; }';
+        xml += '.footer { text-align: center; font-size: 9pt; margin-top: 20px; }';
+        xml += '.detalle-retencion th, .detalle-retencion td { border: 1px solid #ccc; }'; // Bordes grises para la última tabla
         xml += '</style></head><body>';
 
         xml += '<table class="header-table red-rounded-table">';
@@ -280,11 +280,11 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
         xml += '</tr>';
         xml += '</table>';
         xml += '<h2>Detalles de la retención</h2>';
-        xml += '<table>';
+        xml += '<table class="detalle-retencion">'; // Agregar clase para la última tabla
         xml += '<tr>';
-        xml += '<th>Concepto de la retención</th>';
-        xml += '<th>Monto total sujeto a retención</th>';
-        xml += '<th>Valor total retención</th>';
+        xml += '<th><strong>Concepto de la retención</strong></th>';
+        xml += '<th><strong>Monto total sujeto a retención</strong></th>';
+        xml += '<th><strong>Valor total retención</strong></th>';
         xml += '</tr>';
         xml += tableRows;
         xml += '</table>';
