@@ -5,7 +5,7 @@
 define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], function (config, render, record, log, file, task) {
     function onRequest(context) {
         try {
-            var multipleVendors = context.request.parameters.massPDF
+            var multipleVendors = context.request.parameters.massPDF;
             var startDate = context.request.parameters.startDate;
             var endDate = context.request.parameters.endDate;
             if (!multipleVendors) {
@@ -111,7 +111,7 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
                 log.debug({
                     title: 'parameters',
                     details: context.request.parameters
-                })
+                });
 
                 var mrTask = task.create({
                     taskType: task.TaskType.MAP_REDUCE,
@@ -165,8 +165,7 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
                     '<body>' +
                     '    <div class="container">' +
                     '        <h1>PDFs Successfully Saved</h1>' +
-                    '        <p>Your PDFs has been successfully saved in the File Cabinet.</p>' +
-
+                    '        <p>Your PDFs have been successfully saved in the File Cabinet.</p>' +
                     '    </div>' +
                     '</body>' +
                     '</html>';
@@ -183,7 +182,6 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
         }
     }
 
-
     function escapeXml(unsafe) {
         return unsafe ? unsafe.replace(/[<>&'"]/g, function (c) {
             switch (c) {
@@ -194,6 +192,10 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
                 case '"': return '&quot;';
             }
         }) : '';
+    }
+
+    function formatCurrency(amount) {
+        return '$' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
     }
 
     function generateXML(vendorRecord, startDate, endDate, fiscalYear, sublistData) {
@@ -207,42 +209,27 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
 
         log.debug('Company Information', { companyName: companyName, companyNit: companyNit, companyAddress: companyAddress });
 
-        var groupedData = {};
+        var totalRetentionAmount = 0;
+        var totalNonRetentionAmount = 0;
 
-        // Agrupar los datos de la sublista
+        // Calcular los totales
         sublistData.forEach(function (row) {
-            var key = row.type + '|' + row.name + '|' + row.account;
-            if (!groupedData[key]) {
-                groupedData[key] = {
-                    name: row.name,
-                    account: row.account,
-                    amount: 0
-                };
+            if (row.account.toLowerCase().indexOf('witholding') !== -1) {
+                totalRetentionAmount += parseFloat(row.amount);
+            } else {
+                totalNonRetentionAmount += parseFloat(row.amount);
             }
-            groupedData[key].amount += parseFloat(row.amount);
         });
 
-        log.debug('Grouped Data', groupedData);
-
-        var totalRetentionAmount = 0;
-        var tableRows = '';
-        for (var key in groupedData) {
-            var row = groupedData[key];
-            tableRows += '<tr>';
-            tableRows += '<td>' + escapeXml(row.account) + '</td>';
-            tableRows += '<td>' + escapeXml(row.amount.toFixed(2)) + '</td>';
-            tableRows += '</tr>';
-            totalRetentionAmount += row.amount;
-        }
-
         log.debug('Total Retention Amount', totalRetentionAmount);
+        log.debug('Total Non-Retention Amount', totalNonRetentionAmount);
 
         var xml = '<pdf><head><style>';
         xml += 'body { font-family: Arial, sans-serif; font-size: 10pt; color: #333; }';
         xml += 'h1 { font-size: 18pt; color: #000000; }';
         xml += 'h2 { font-size: 14pt; color: #0056b3; }';
         xml += 'table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }';
-        xml += '.red-rounded-table { border: 2px solid red; border-radius: 10px; padding: 10px; }';
+    xml += '.red-rounded-table { border: 2px solid red; border-radius: 10px; padding: 10px; }';
         xml += '.black-rounded-table { border: 2px solid black; border-radius: 10px; padding: 10px; }';
         xml += 'th, td { padding: 6px; text-align: center; }'; // Sin bordes por defecto
         xml += 'th { background-color: #f2f2f2; }';
@@ -276,7 +263,7 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
         xml += '<td><strong>Retuvo a:</strong> ' + escapeXml(vendorRecord.getValue('companyname')) + '</td>';
         xml += '</tr>';
         xml += '<tr>';
-        xml += '<td><strong>NIT:</strong> ' + escapeXml(vendorRecord.getValue('entityid')) + '</td>';
+        xml += '<td><strong>NIT:</strong> ' + escapeXml(vendorRecord.getValue('vatregnumber')) + '</td>';
         xml += '</tr>';
         xml += '</table>';
         xml += '<h2>Detalles de la retención</h2>';
@@ -286,7 +273,11 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
         xml += '<th><strong>Monto total sujeto a retención</strong></th>';
         xml += '<th><strong>Valor total retención</strong></th>';
         xml += '</tr>';
-        xml += tableRows;
+        xml += '<tr>';
+        xml += '<td>Retención</td>';
+        xml += '<td>' + escapeXml(formatCurrency(totalNonRetentionAmount)) + '</td>';
+        xml += '<td>' + escapeXml(formatCurrency(totalRetentionAmount)) + '</td>';
+        xml += '</tr>';
         xml += '</table>';
 
         xml += '<p><strong>Firma autorizada:</strong> ______________________</p>';

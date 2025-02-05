@@ -62,7 +62,7 @@ define(['N/ui/serverWidget', 'N/search', 'N/record', 'N/render', 'N/config'], fu
 
             var filters = [];
 
-            filters.push(["subsidiary", "anyof", "10"])
+            filters.push(["subsidiary", "anyof", "10"]);
             if (vendor) {
                 filters.push('AND');
                 filters.push(["vendor.internalid", "anyof", vendor]);
@@ -111,13 +111,13 @@ define(['N/ui/serverWidget', 'N/search', 'N/record', 'N/render', 'N/config'], fu
                         summary: "SUM",
                         label: "Amount (Foreign Currency)"
                     }),
-
                     search.createColumn({
                         name: "vatregnumber",
                         join: "vendor",
                         summary: "GROUP",
                         label: "Tax Number"
-                    })]
+                    })
+                ]
             });
 
             var searchResults = searchObj.run().getRange({ start: 0, end: 1000 });
@@ -167,7 +167,7 @@ define(['N/ui/serverWidget', 'N/search', 'N/record', 'N/render', 'N/config'], fu
                     label: "Tax Number"
                 });
 
-                if ((account.indexOf('witholding') !== -1 || account.indexOf('Expenses') !== -1) && amount !== 0 && entityName) {
+                if ((account.indexOf('witholding') !== -1 || account.indexOf('Expense') !== -1 || account.indexOf('Asset') !== -1 || /^15\d{3}$/.test(account)) && amount !== 0 && entityName) {
                     if (!vendorData[vendorId]) {
                         vendorData[vendorId] = {
                             vendorId: vendorId,
