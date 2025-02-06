@@ -80,6 +80,8 @@ define(['N/ui/serverWidget', 'N/search', 'N/record', 'N/render', 'N/config'], fu
                 filters.push(['trandate', 'onorbefore', endDate]);
             }
 
+
+
             var searchObj = search.create({
                 type: search.Type.VENDOR_BILL,
                 filters: filters,
@@ -167,15 +169,15 @@ define(['N/ui/serverWidget', 'N/search', 'N/record', 'N/render', 'N/config'], fu
                     label: "Tax Number"
                 });
 
-                if ((account.indexOf('witholding') !== -1 || account.indexOf('Expense') !== -1 || account.indexOf('Asset') !== -1 || /^15\d{3}$/.test(account)) && amount !== 0 && entityName) {
-                    if (!vendorData[vendorId]) {
-                        vendorData[vendorId] = {
-                            vendorId: vendorId,
-                            vendorName: entityName,
-                            vendorNit: vendorNit,
-                            lines: []
-                        };
-                    }
+                if ((account.indexOf('witholding') !== -1 || /^15/.test(account) || /^5/.test(account) || /^6/.test(account)) && amount !== 0 && entityName) {
+    if (!vendorData[vendorId]) {
+        vendorData[vendorId] = {
+            vendorId: vendorId,
+            vendorName: entityName,
+            vendorNit: vendorNit,
+            lines: []
+        };
+    }
                     vendorData[vendorId].lines.push({
                         type: result.getValue('type'),
                         account: account,
