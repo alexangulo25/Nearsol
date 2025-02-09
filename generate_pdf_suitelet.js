@@ -197,8 +197,7 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
     function formatCurrency(amount) {
         return '$' + amount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
     }
-
-    function generateXML(vendorRecord, startDate, endDate, fiscalYear, sublistData) {
+function generateXML(vendorRecord, startDate, endDate, fiscalYear, sublistData) {
     var companyConfig = config.load({
         type: config.Type.COMPANY_INFORMATION
     });
@@ -213,25 +212,30 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
     var taxItemsGrouped = {};
 
     sublistData.forEach(function (row) {
-        var taxItem = row.taxitem; // Asume que taxitem está en los datos de la sublista
-        var amount = parseFloat(row.amount);
+    var taxItem = row.taxitem; // Asume que taxitem está en los datos de la sublista
+    var amount = parseFloat(row.amount);
 
-        if (!taxItemsGrouped[taxItem]) {
-            taxItemsGrouped[taxItem] = {
-                taxItem: taxItem,
-                totalAmount: 0,
-                retentionAmount: 0
-            };
-        }
+    // Normalizar el nombre del taxitem usando indexOf
+    if (taxItem.indexOf("236530 WHT Rent 4%") !== -1 || taxItem.indexOf("236530 WHTRent4%") !== -1) {
+        taxItem = "236530 WHT Rent 4%"; // Nombre común para ambos casos
+    }
 
-        // Sumar el monto total
-        taxItemsGrouped[taxItem].totalAmount += amount;
+    if (!taxItemsGrouped[taxItem]) {
+        taxItemsGrouped[taxItem] = {
+            taxItem: taxItem,
+            totalAmount: 0,
+            retentionAmount: 0
+        };
+    }
 
-        // Si es una retención, sumar al monto de retención
-        if (row.account.toLowerCase().indexOf('witholding') !== -1) {
-            taxItemsGrouped[taxItem].retentionAmount += amount;
-        }
-    });
+    // Sumar el monto total
+    taxItemsGrouped[taxItem].totalAmount += amount;
+
+    // Si es una retención, sumar al monto de retención
+    if (row.account.toLowerCase().indexOf('witholding') !== -1) {
+        taxItemsGrouped[taxItem].retentionAmount += amount;
+    }
+});
 
     log.debug('Grouped Tax Items', taxItemsGrouped);
 
@@ -307,6 +311,20 @@ define(['N/config', 'N/render', 'N/record', 'N/log', 'N/file', 'N/task'], functi
     log.debug('Generated XML Content', xml);
 
     return xml;
+}
+
+// Función para normalizar las combinaciones de taxitem
+function normalizeTaxItem(taxItem) {
+    if (!taxItem) return '';
+
+    // Separar los componentes del taxitem
+    var components = taxItem.split(' + ');
+
+    // Ordenar los componentes alfabéticamente
+    components.sort();
+
+    // Unir los componentes ordenados
+    return components.join(' + ');
 }
 
     return {
