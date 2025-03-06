@@ -212,30 +212,34 @@ function generateXML(vendorRecord, startDate, endDate, fiscalYear, sublistData) 
     var taxItemsGrouped = {};
 
     sublistData.forEach(function (row) {
-    var taxItem = row.taxitem; // Asume que taxitem está en los datos de la sublista
-    var amount = parseFloat(row.amount);
-
-    // Normalizar el nombre del taxitem usando indexOf
-    if (taxItem.indexOf("236530 WHT Rent 4%") !== -1 || taxItem.indexOf("236530 WHTRent4%") !== -1) {
-        taxItem = "236530 WHT Rent 4%"; // Nombre común para ambos casos
-    }
-
-    if (!taxItemsGrouped[taxItem]) {
-        taxItemsGrouped[taxItem] = {
-            taxItem: taxItem,
-            totalAmount: 0,
-            retentionAmount: 0
-        };
-    }
-
-    // Sumar el monto total
-    taxItemsGrouped[taxItem].totalAmount += amount;
-
-    // Si es una retención, sumar al monto de retención
-    if (row.account.toLowerCase().indexOf('witholding') !== -1) {
-        taxItemsGrouped[taxItem].retentionAmount += amount;
-    }
-});
+        var taxItem = row.taxitem; // Asume que taxitem está en los datos de la sublista
+        var amount = parseFloat(row.amount);
+    
+        // Normalizar el nombre del taxitem
+        if (
+            taxItem.indexOf("236530 WHT Rent 4%") !== -1 ||
+            taxItem.indexOf("236530 WHTRent4%") !== -1 ||
+            taxItem.indexOf("236530 WHTCOArri4") !== -1
+        ) {
+            taxItem = "236530 WHT Rent 4%"; // Nombre común para todos los casos
+        }
+    
+        if (!taxItemsGrouped[taxItem]) {
+            taxItemsGrouped[taxItem] = {
+                taxItem: taxItem,
+                totalAmount: 0,
+                retentionAmount: 0
+            };
+        }
+    
+        // Sumar el monto total
+        taxItemsGrouped[taxItem].totalAmount += amount;
+    
+        // Si es una retención, sumar al monto de retención
+        if (row.account.toLowerCase().indexOf('witholding') !== -1) {
+            taxItemsGrouped[taxItem].retentionAmount += amount;
+        }
+    });
 
     log.debug('Grouped Tax Items', taxItemsGrouped);
 
